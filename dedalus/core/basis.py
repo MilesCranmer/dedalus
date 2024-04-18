@@ -1034,6 +1034,25 @@ class DifferentiateComplexFourier(operators.Differentiate, operators.SpectralOpe
         return np.array([[1j*k]])
 
 
+class HilbertTransformComplexFourier(operators.HilbertTransform, operators.SpectralOperator1D):
+    """ComplexFourier Hilbert transform."""
+
+    input_basis_type = ComplexFourier
+    subaxis_dependence = [True]
+    subaxis_coupling = [False]
+
+    @staticmethod
+    def _output_basis(input_basis):
+        return input_basis
+
+    @staticmethod
+    def _group_matrix(group, input_basis, output_basis):
+        # Rescale group (native wavenumber) to get physical wavenumber
+        k = group / input_basis.COV.stretch
+        # Hx exp(1j*k*x) = -1j * sgn(k) * exp(1j*k*x)
+        return np.array([[-1j*np.sign(k)]])
+
+
 class InterpolateComplexFourier(operators.Interpolate, operators.SpectralOperator1D):
     """ComplexFourier interpolation."""
 
@@ -1224,6 +1243,27 @@ class DifferentiateRealFourier(operators.Differentiate, operators.SpectralOperat
                          [k,  0]])
 
 
+class HilbertTransformRealFourier(operators.HilbertTransform, operators.SpectralOperator1D):
+    """RealFourier Hilbert transform."""
+
+    input_basis_type = RealFourier
+    subaxis_dependence = [True]
+    subaxis_coupling = [False]
+
+    @staticmethod
+    def _output_basis(input_basis):
+        return input_basis
+
+    @staticmethod
+    def _group_matrix(group, input_basis, output_basis):
+        # Rescale group (native wavenumber) to get physical wavenumber
+        k = group / input_basis.COV.stretch
+        # Hx  cos(n*x) = sin(n*x)
+        # Hx -sin(n*x) = cos(n*x)
+        return np.array([[0, 1],
+                         [1, 0]])
+
+
 class InterpolateRealFourier(operators.Interpolate, operators.SpectralOperator1D):
     """RealFourier interpolation."""
 
@@ -1298,38 +1338,6 @@ class AverageRealFourier(operators.Average, operators.SpectralOperator1D):
         else:
             # Constructor should only loop over group 0.
             raise ValueError("This should never happen.")
-
-
-# class HilbertTransformFourier(operators.HilbertTransform):
-#     """Fourier series Hilbert transform."""
-
-#     input_basis_type = Fourier
-#     bands = [-1, 1]
-#     separable = True
-
-#     @staticmethod
-#     def output_basis(space, input_basis):
-#         return space.Fourier
-
-#     @staticmethod
-#     def _build_subspace_entry(i, j, space, input_basis):
-#         # Hx(cos(n*x)) = sin(n*x)
-#         # Hx(sin(n*x)) = -cos(n*x)
-#         n = j // 2
-#         if n == 0:
-#             return 0
-#         elif (j % 2) == 0:
-#             # Hx(cos(n*x)) = sin(n*x)
-#             if i == (j + 1):
-#                 return 1
-#             else:
-#                 return 0
-#         else:
-#             # Hx(sin(n*x)) = -cos(n*x)
-#             if i == (j - 1):
-#                 return (-1)
-#             else:
-#                 return 0
 
 
 # class Sine(Basis, metaclass=CachedClass):
